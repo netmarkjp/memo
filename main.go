@@ -96,6 +96,12 @@ var commands = []cli.Command{
 		Aliases: []string{"n"},
 		Usage:   "create memo",
 		Action:  cmdNew,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "template",
+				Usage: "memo template (Go template)",
+			},
+		},
 	},
 	{
 		Name:    "list",
@@ -456,14 +462,20 @@ func cmdNew(c *cli.Context) error {
 		if title == "" {
 			title = time.Now().Format("2006-01-02")
 			file = title + ".md"
-			
+
 		} else {
 			file = time.Now().Format("2006-01-02-") + escape(title) + ".md"
 		}
 
 	}
 	file = filepath.Join(cfg.MemoDir, file)
-	t := template.Must(template.New("memo").Parse(templateMemoContent))
+
+	var t *template.Template
+	if c.String("template") != "" {
+		t = template.Must(template.New("memo").Parse(c.String("template")))
+	} else {
+		t = template.Must(template.New("memo").Parse(templateMemoContent))
+	}
 
 	if fileExists(file) {
 		return cfg.runcmd(cfg.Editor, "", file)
